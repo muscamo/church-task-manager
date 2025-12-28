@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'project_list' %}" class="text-indigo-600 hover:underline mb-2 inline-block">
+        ← Back to Projects
+    </a>
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900">{{ project.name }}</h2>
+            <p class="text-gray-600 mt-2">{{ project.description }}</p>
+        </div>
+        <a href="{% url 'gantt' project.id %}" 
+           class="btn btn-success">
+            📊 Gantt View
+        </a>
+    </div>
+</div>
+
+<div class="board-surface">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for board in boards %}
+        <div class="card p-6 card-hover">
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ board.name }}</h3>
+            <p class="text-gray-600 mb-4">{{ board.description|default:"No description" }}</p>
+            
+            <div class="text-sm text-gray-500 mb-4">
+                <span>{{ board.tasks.count }} tasks</span>
+            </div>
+            
+            <a href="{% url 'kanban' board.id %}" 
+               class="btn btn-primary btn-block">
+                Open Kanban Board
+            </a>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <p class="text-gray-500">No boards in this project yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

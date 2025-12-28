@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% block title %}{{ team.name }} - Team Details{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="card p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900">{{ team.name }}</h2>
+                {% if team.description %}
+                <p class="text-gray-600 mt-2">{{ team.description }}</p>
+                {% endif %}
+            </div>
+            <div class="flex space-x-2">
+                <a href="{% url 'team_list' %}" class="btn btn-secondary">Back to Teams</a>
+                {% if user.is_admin %}
+                <a href="{% url 'team_edit' team.id %}" class="btn btn-primary">Edit Team</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Team Members Section -->
+        <div class="lg:col-span-2">
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Team Members</h3>
+                    <span class="bg-indigo-100 text-indigo-800 rounded-full px-2 py-1 text-xs font-medium">
+                        {{ memberships.count }} members
+                    </span>
+                </div>
+                
+                <div class="space-y-3">
+                    {% for membership in memberships %}
+                    <div class="member-row flex items-center justify-between p-3 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if membership.user.avatar %}
+                                    <img class="w-12 h-12 rounded-full object-cover mr-2" src="{{ membership.user.avatar.url }}" alt="">
+                                {% else %}
+                                    <div class="member-avatar flex items-center justify-center mr-2">
+                                        <span class="font-medium">
+                                            {{ membership.user.get_full_name|make_list|first|default:membership.user.username|make_list|first|upper }}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ membership.user.get_full_name|default:membership.user.username }}
+                                </div>
+                                <div class="text-sm text-gray-500">{{ membership.user.email|default:'No email' }}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if membership.role == 'leader' %}bg-purple-100 text-purple-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                {{ membership.get_role_display }}
+                            </span>
+                            {% if user.is_admin %}
+                            <form method="post" action="{% url 'remove_team_member' team.id membership.id %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" onclick="return confirm('Remove {{ membership.user.get_full_name|default:membership.user.username }} from the team?')"
+                                        class="btn btn-danger btn-icon" aria-label="Remove team member">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8 text-gray-500">
+                        No team members yet.
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if user.is_admin %}
+                <!-- Add Member Form -->
+                {% if available_users %}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="text-md font-medium text-gray-900 mb-3">Add Team Member</h4>
+                    <form method="post" action="{% url 'add_team_member' team.id %}" class="flex gap-3">
+                        {% csrf_token %}
+                        <select name="user" required
+                                class="ui-input flex-1">
+                            <option value="">Select a user...</option>
+                            {% for user in available_users %}
+                            <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }} ({{ user.get_role_display }})</option>
+                            {% endfor %}
+                        </select>
+                        <select name="role"
+                                class="ui-input">
+                            <option value="member">Team Member</option>
+                            <option value="leader">Team Leader</option>
+                        </select>
+                        <button type="submit" 
+                                class="btn btn-primary">
+                            Add
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <p class="text-sm text-gray-500">All available users are already team members.</p>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Team Info Section -->
+        <div class="lg:col-span-1">
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Team Information</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <div class="text-sm font-medium text-gray-500">Created By</div>
+                        <div class="text-sm text-gray-900 font-medium">{{ team.created_by.get_full_name|default:team.created_by.username }}</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <div class="text-sm font-medium text-gray-500">Created Date</div>
+                        <div class="text-sm text-gray-900 font-medium">{{ team.created_at|date:"M d, Y" }}</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between py-2">
+                        <div class="text-sm font-medium text-gray-500">Status</div>
+                        <div class="text-sm text-gray-900">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Active
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Team Projects -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="text-md font-medium text-gray-900 mb-3">Projects</h4>
+                    <div class="space-y-2">
+                        {% for project in team.projects.all %}
+                        <a href="{% url 'project_detail' project.id %}" 
+                           class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors hover:shadow-sm">
+                            <div class="text-sm font-medium text-gray-900">{{ project.name }}</div>
+                            {% if project.description %}
+                            <div class="text-xs text-gray-500 truncate mt-1">{{ project.description }}</div>
+                            {% endif %}
+                        </a>
+                        {% empty %}
+                        <p class="text-sm text-gray-500 italic">No projects assigned to this team.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

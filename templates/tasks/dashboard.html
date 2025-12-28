@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h2 class="text-3xl font-bold text-gray-900 mb-6">Dashboard</h2>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-sm font-medium text-gray-500 mb-1">Total Tasks</div>
+        <div class="text-3xl font-bold text-gray-900">{{ total_tasks }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-sm font-medium text-gray-500 mb-1">To Do</div>
+        <div class="text-3xl font-bold text-blue-600">{{ tasks_by_status.todo }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-sm font-medium text-gray-500 mb-1">In Progress</div>
+        <div class="text-3xl font-bold text-yellow-600">{{ tasks_by_status.in_progress }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-sm font-medium text-gray-500 mb-1">Completed</div>
+        <div class="text-3xl font-bold text-green-600">{{ tasks_by_status.completed }}</div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Task Status Pie Chart -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Tasks by Status</h3>
+        <div class="chart-container">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Tasks Per User Bar Chart -->
+    {% if user.is_admin and tasks_per_user %}
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Tasks per Team Member</h3>
+        <div class="chart-container">
+            <canvas id="userChart"></canvas>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">My Completion Rate</h3>
+        <div class="flex items-center justify-center h-48">
+            <div class="text-center">
+                <div class="text-6xl font-bold text-indigo-600 mb-2">{{ completion_percentage }}%</div>
+                <div class="text-gray-600">Tasks Completed</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Overdue Tasks -->
+{% if overdue_tasks %}
+<div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+    <h3 class="text-lg font-semibold text-red-900 mb-4">⚠️ Overdue Tasks ({{ overdue_tasks.count }})</h3>
+    <div class="space-y-2">
+        {% for task in overdue_tasks|slice:":5" %}
+        <div class="bg-white rounded p-3 flex justify-between items-center">
+            <div>
+                <div class="font-medium text-gray-900">{{ task.title }}</div>
+                <div class="text-sm text-gray-600">
+                    {{ task.board.project.name }} | Due: {{ task.due_date|date:"M d, Y" }}
+                </div>
+            </div>
+            <a href="{% url 'kanban' task.board.id %}" 
+               class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors text-sm">
+                View
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Tasks -->
+<div class="bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Tasks</h3>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for task in recent_tasks %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-600">{{ task.board.project.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-600">
+                            {% if task.assigned_to %}{{ task.assigned_to.get_full_name }}{% else %}Unassigned{% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            {% if task.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif task.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                            {% elif task.status == 'waiting' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ task.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-600">{{ task.progress }}%</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <a href="{% url 'kanban' task.board.id %}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Status Pie Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['To Do', 'In Progress', 'Waiting', 'Completed'],
+            datasets: [{
+                data: [
+                    {{ tasks_by_status.todo }},
+                    {{ tasks_by_status.in_progress }},
+                    {{ tasks_by_status.waiting }},
+                    {{ tasks_by_status.completed }}
+                ],
+                backgroundColor: [
+                    '#3B82F6',
+                    '#EAB308',
+                    '#EF4444',
+                    '#10B981'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    {% if user.is_admin and tasks_per_user %}
+    // Users Bar Chart
+    const userCtx = document.getElementById('userChart').getContext('2d');
+    new Chart(userCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for item in tasks_per_user %}'{{ item.user }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Total Tasks',
+                data: [{% for item in tasks_per_user %}{{ item.total }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                backgroundColor: '#3B82F6'
+            }, {
+                label: 'Completed',
+                data: [{% for item in tasks_per_user %}{{ item.completed }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                backgroundColor: '#10B981'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

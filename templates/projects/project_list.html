@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Projects{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-3xl font-bold text-gray-900">Projects</h2>
+    {% if user.is_admin %}
+    <a href="{% url 'project_create' %}" 
+       class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors">
+        + New Project
+    </a>
+    {% endif %}
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for project in projects %}
+    <div class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ project.name }}</h3>
+        <p class="text-gray-600 mb-4 line-clamp-2">{{ project.description|default:"No description" }}</p>
+        
+        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+            <span>By: {{ project.created_by.get_full_name }}</span>
+            <span>{{ project.created_at|date:"M d, Y" }}</span>
+        </div>
+        
+        <div class="flex gap-2">
+            <a href="{% url 'project_detail' project.id %}" 
+               class="flex-1 bg-indigo-600 text-white text-center py-2 rounded hover:bg-indigo-700 transition-colors">
+                View Boards
+            </a>
+            {% if user.is_admin %}
+            <a href="{% url 'project_edit' project.id %}" 
+               class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors">
+                Edit
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full text-center py-12">
+        <p class="text-gray-500 text-lg">No projects yet.</p>
+        {% if user.is_admin %}
+        <a href="{% url 'project_create' %}" class="text-indigo-600 hover:underline mt-2 inline-block">
+            Create your first project
+        </a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

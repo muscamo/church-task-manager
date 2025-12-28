@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Login - TaskSteward{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="card auth-card card-hover">
+        <div>
+            <h2 class="auth-title">⛪ TaskSteward</h2>
+            <p class="auth-subtitle">Sign in to manage your church tasks</p>
+        </div>
+
+        <form class="auth-stack" method="post">
+            {% csrf_token %}
+
+            <div>
+                <label for="username" class="sr-only">Username</label>
+                <input id="username" name="username" type="text" required
+                       class="auth-input"
+                       placeholder="Username">
+            </div>
+
+            <div>
+                <label for="password" class="sr-only">Password</label>
+                <input id="password" name="password" type="password" required
+                       class="auth-input"
+                       placeholder="Password">
+            </div>
+
+            {% if form.errors %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <p>Invalid username or password. Please try again.</p>
+            </div>
+            {% endif %}
+
+            <div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    Sign in
+                </button>
+            </div>
+
+            {% comment %}
+            <div class="text-center text-sm text-gray-600 mt-4">
+                <p class="font-semibold">Demo Accounts:</p>
+                <p>Admin: <code class="bg-gray-100 px-2 py-1 rounded">admin / admin123</code></p>
+                <p>Member: <code class="bg-gray-100 px-2 py-1 rounded">member1 / member123</code></p>
+            </div>
+            {% endcomment %}
+        </form>
+    </div>
+</div>
+{% endblock %}

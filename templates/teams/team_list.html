@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Teams{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="card p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <h2 class="text-3xl font-bold text-gray-900">Teams</h2>
+            {% if user.is_admin %}
+            <a href="{% url 'team_create' %}" class="btn btn-primary">+ New Team</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for team in teams %}
+        <div class="card p-6 card-hover">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl mr-2 font-semibold text-gray-900">{{ team.name }}</h3>
+                {% if user.is_admin %}
+                <div class="flex space-x-2">
+                    <a href="{% url 'team_edit' team.id %}" class="btn btn-secondary btn-icon" aria-label="Edit team">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </a>
+                    <form method="post" action="{% url 'team_delete' team.id %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" onclick="return confirm('Delete team {{ team.name }}?')"
+                                class="btn btn-danger btn-icon" aria-label="Delete team">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if team.description %}
+            <p class="text-gray-600 mb-4">{{ team.description|truncatewords:20 }}</p>
+            {% endif %}
+            
+            <div class="flex items-center mb-2">
+                <div class="flex items-center text-sm text-gray-500">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    {{ team.get_member_count }} members
+                </div>
+            </div>
+            <div class="text-sm text-gray-500 mb-4">
+                Created {{ team.created_at|date:"M d, Y" }}
+            </div>
+            
+            <a href="{% url 'team_detail' team.id %}" class="btn btn-primary btn-block">
+                View Details
+            </a>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <div class="text-gray-400 mb-4">
+                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No teams found</h3>
+            <p class="text-gray-500 mb-4">
+                {% if user.is_admin %}
+                    Create your first team to get started.
+                {% else %}
+                    You haven't been added to any teams yet.
+                {% endif %}
+            </p>
+            {% if user.is_admin %}
+            <a href="{% url 'team_create' %}" class="btn btn-primary">Create Team</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
