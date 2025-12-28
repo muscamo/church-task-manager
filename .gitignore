@@ -46,6 +46,3 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
-
-# Render
-render.yaml

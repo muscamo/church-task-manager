@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: church-task-manager
+    runtime: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn church_task_manager.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: DJANGO_SETTINGS_MODULE
+        value: church_task_manager.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: church-task-manager-db
+          property: connectionString
+
+databases:
+  - name: church-task-manager-db
+    plan: free
+    ipAllowList: []
